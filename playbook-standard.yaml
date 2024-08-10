@@ -1,0 +1,5 @@
+---
+- name: Configure remote hosts
+  hosts: alma
+  roles:
+    # add roles for standard configuration here
