@@ -1,0 +1,8 @@
+---
+- name: Add grub password
+  community.general.grub_passwd:
+    password: "{{ grub_password }}"
+    target: "/etc/grub.d/40_custom"
+    update_grub: true
+    force: true
+  when: grub_password is defined

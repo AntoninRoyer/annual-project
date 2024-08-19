@@ -2,4 +2,6 @@
 - name: Configure remote hosts
   hosts: alma
   roles:
+    # - kernel
+    - system
     # add roles for standard configuration here
