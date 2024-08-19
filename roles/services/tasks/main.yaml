@@ -1,0 +1,38 @@
+---
+- name: "Disabling the non-necessary services"
+
+- name: "Disabling non-essential features of services"
+
+- name: "Configuring the privileges of the services"
+
+- name: "Partitioning the services"
+
+- name: "Hardening the partitioning components"
+
+- name: "Secureremote authentication with PAM"
+
+- name: "Protecting the stored passwords"
+
+- name: "Securingaccess to remote user databases"
+
+- name: "Separating the system accounts and directory administrator"
+
+- name: "Implementing a logging system"
+
+- name: "Implementing dedicated service activity journals"
+
+- name: "Logging the system activity with auditd"
+
+- name: "Hardening the local messaging service"
+
+- name: "Configuring aliases for service accounts"
+
+- name: "Sealing and checking files integrity"
+
+- name: "Protecting the sealing database"
+
+- name: "Partitioning the network services"
+
+- name: "Hardening and monitoring the exposed services"
+
+- name: "Minimizing the attack surface of network services"
