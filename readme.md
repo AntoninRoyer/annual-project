@@ -19,7 +19,7 @@ alma_host ansible_host=<ip_address>
 
 Run the playbook init and enter the password of the ansible user of the client VM when prompted:
 ```bash
-ansible-playbook playbook-init.yml -k
+ansible-playbook playbook-init.yaml -k
 ```
 ## Authors
 - Antonin Royer
