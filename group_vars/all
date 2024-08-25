@@ -2,3 +2,16 @@
 
 ansible_ssh_private_key_file: ~/.ssh/id_ed25519
 ansible_user: ansible
+
+# services
+services_list:
+               - avahi-daemon
+               - colord
+               - ModemManager
+               - switcheroo-control
+               - packagekit
+               - realmd
+               - rtkit-daemon
+               - gdm
+               - power-profiles-daemon
+               - wpa_supplicant

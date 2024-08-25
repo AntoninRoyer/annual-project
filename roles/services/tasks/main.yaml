@@ -1,38 +1,44 @@
 ---
-- name: "Disabling the non-necessary services"
+- name: Disabling and stopping the non-necessary services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: false
+    state: stopped
+  loop: "{{ services_list }}"
 
-- name: "Disabling non-essential features of services"
 
-- name: "Configuring the privileges of the services"
+# - name: "Disabling non-essential features of services"
 
-- name: "Partitioning the services"
+# - name: "Configuring the privileges of the services"
 
-- name: "Hardening the partitioning components"
+# - name: "Partitioning the services"
 
-- name: "Secureremote authentication with PAM"
+# - name: "Hardening the partitioning components"
 
-- name: "Protecting the stored passwords"
+# - name: "Secureremote authentication with PAM"
 
-- name: "Securingaccess to remote user databases"
+# - name: "Protecting the stored passwords"
 
-- name: "Separating the system accounts and directory administrator"
+# - name: "Securingaccess to remote user databases"
 
-- name: "Implementing a logging system"
+# - name: "Separating the system accounts and directory administrator"
 
-- name: "Implementing dedicated service activity journals"
+# - name: "Implementing a logging system"
 
-- name: "Logging the system activity with auditd"
+# - name: "Implementing dedicated service activity journals"
 
-- name: "Hardening the local messaging service"
+# - name: "Logging the system activity with auditd"
 
-- name: "Configuring aliases for service accounts"
+# - name: "Hardening the local messaging service"
 
-- name: "Sealing and checking files integrity"
+# - name: "Configuring aliases for service accounts"
 
-- name: "Protecting the sealing database"
+# - name: "Sealing and checking files integrity"
 
-- name: "Partitioning the network services"
+# - name: "Protecting the sealing database"
 
-- name: "Hardening and monitoring the exposed services"
+# - name: "Partitioning the network services"
 
-- name: "Minimizing the attack surface of network services"
+# - name: "Hardening and monitoring the exposed services"
+
+# - name: "Minimizing the attack surface of network services"
