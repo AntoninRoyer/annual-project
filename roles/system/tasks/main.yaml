@@ -66,11 +66,15 @@
 # - name: "Updating regularly the system"
 
 # Partitionning
+- name: Get the UUID of /boot partition
+  command: findmnt -no UUID /boot
+  register: boot_uuid
+
 - name: Ensure /boot partition in /etc/fstab has noauto option
   lineinfile:
     path: /etc/fstab
-    regexp: '^(UUID=.*\s+/boot\s+xfs\s+)(.*)'
-    line: '\1noauto,\2'
+    regexp: '^(UUID={{ boot_uuid.stdout }}\s+/boot\s+xfs\s+)(.*)'
+    line: 'UUID={{ boot_uuid.stdout }} /boot xfs noauto,\2'
     backrefs: yes
 
 - name: Reload systemd to apply changes
@@ -79,7 +83,7 @@
 - name: Ensure /boot is mounted as needed (optional)
   mount:
     path: /boot
-    src: UUID=edb110a5-a1d4-4a42-960f-4d6f5630189e  # Remplacez avec l'UUID correct si nécessaire
+    src: UUID={{ boot_uuid.stdout }}
     fstype: xfs
     opts: defaults
     state: mounted
