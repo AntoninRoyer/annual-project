@@ -8,3 +8,6 @@
 
 - name: Reload auditd rules
   command: "augenrules --load"
+
+- name: Reload profile
+  shell: source /etc/profile
