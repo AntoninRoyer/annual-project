@@ -1,70 +1,4 @@
 ---
-# - name: "Partitioning"
-
-# - name: "Remove unused user accounts"
-
-# - name: "Userpassword strength"
-
-# - name: "Configuring a timeout on local user sessions"
-
-# - name: "Ensuringthe imputability of administration actions"
-
-# - name: "Disabling the service accounts"
-
-# - name: "Uniqueness and exclusivity of service accounts"
-
-# - name: "Changing the default value of UMASK"
-
-# - name: "Using Mandatory Access Control features"
-
-# - name: "Creating a group dedicated to the use of sudo"
-
-# - name: "Sudo configuration guidelines"
-
-# - name: "Using unprivileged users as target for sudo commands"
-
-# - name: "Limiting the number of commands requiring the use of the EXEC directive"
-
-# - name: "Banishing the negations in sudo policies"
-
-# - name: "Defining the arguments in sudo specifications"
-
-# - name: "Editing files securely with sudo"
-
-# - name: "Activating AppArmor security profiles"
-
-# - name: "Activating SELinux with the targeted policy"
-
-# - name: "Containing the unprivileged interactive users"
-
-# - name: "Setting up the SELinux variables"
-
-# - name: "Uninstalling SELinux Policy Debugging Tools"
-
-# - name: "Limiting the rights to access sensitive files and directories"
-
-# - name: "Changing the secrets and access rights as soon as possible"
-
-# - name: "Securing access for named sockets and pipes"
-
-# - name: "Avoiding files or directories without a known user or group"
-
-# - name: "Setting the sticky bit on the writable directories"
-
-# - name: "Dedicating temporary directories to users"
-
-# - name: "Avoiding using executables with setuid and setgid rights"
-
-# - name: "Avoiding using executables with setuid root and setgid root rights"
-
-# - name: "Installing only strictly necessary packages"
-
-# - name: "Using only official package repositories"
-
-# - name: "Using hardened package repositories"
-
-# - name: "Updating regularly the system"
-
 # Partitionning
 - name: Get the UUID of /boot partition
   command: findmnt -no UUID /boot
@@ -179,7 +113,7 @@
       -a exit,always -F arch=b64 -S execve,execveat
       -a exit,always -F arch=b32 -S execve,execveat
   notify:
-    - Restart auditd
+    - Reload auditd rules
 
 ## Services accounts
 - name: "Disable shell access for service accounts"
@@ -199,10 +133,62 @@
 
 - name: Disable 'nobody' account from opening a shell
   user:
-    name: "{{ item.name }}"
+    name: nobody
     shell: /sbin/nologin
-  when: item.name == 'nobody'
-  loop: "{{ service_accounts }}"
+
 
 ## Access Control
+- name: S'assurer que la valeur umask est définie dans /etc/profile
+  lineinfile:
+    path: /etc/profile
+    regexp: '^umask'
+    line: 'umask 027'
+    state: present
+  notify: Reload profile
+
+- name: Assurer que le groupe 'wheel' existe (groupe par défaut pour sudo sur RHEL/AlmaLinux)
+  group:
+    name: wheel
+    state: present
+
+- name: Restreindre l'accès à sudo aux seuls membres du groupe wheel
+  lineinfile:
+    path: /etc/sudoers
+    regexp: '^%wheel'
+    line: '%wheel ALL=(ALL) ALL'
+    state: present
+    validate: 'visudo -cf %s'
+
+- name: Désactiver l'utilisation générale de sudo pour tous les utilisateurs sauf le groupe wheel
+  lineinfile:
+    path: /etc/sudoers
+    regexp: '^Defaults\s+env_reset'
+    line: 'Defaults env_reset, !targetpw, !rootpw, !runaspw'
+    state: present
+    validate: 'visudo -cf %s'
+
+- name: Sécuriser les paramètres de sudo pour réduire les risques (requiretty)
+  lineinfile:
+    path: /etc/sudoers
+    regexp: '^Defaults\s+requiretty'
+    line: 'Defaults requiretty'
+    state: present
+    validate: 'visudo -cf %s'
+
+- name: Configurer un fichier de log pour sudo
+  lineinfile:
+    path: /etc/sudoers
+    regexp: '^Defaults\s+logfile'
+    line: 'Defaults logfile="/var/log/sudo.log"'
+    state: present
+    validate: 'visudo -cf %s'
+
+- name: Vérifier les permissions et durcir le binaire sudo
+  file:
+    path: /usr/bin/sudo
+    owner: root
+    group: root
+    mode: '4750'
+
+# TODO: Add custom sudo group
 
