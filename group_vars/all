@@ -2,3 +2,60 @@
 
 ansible_ssh_private_key_file: ~/.ssh/id_ed25519
 ansible_user: ansible
+
+inactivity_days: 90
+inactivity_timeout: 300
+admin_users:
+    - ansible
+sudoers_file: "/etc/sudoers.d/admin_users"
+auditd_rules_file: "/etc/audit/rules.d/audit.rules"
+service_accounts:
+  - name: www-data
+    service: apache2
+    shell: /sbin/nologin
+
+  - name: nginx
+    service: nginx
+    shell: /sbin/nologin
+
+  - name: mysql
+    service: mysql
+    shell: /sbin/nologin
+
+  - name: php-fpm
+    service: php-fpm
+    shell: /sbin/nologin
+
+  - name: nobody
+    action: disable  # Special case to handle nobody account
+
+excluded_users:
+    - root
+    - bin
+    - daemon
+    - adm
+    - lp
+    - sync
+    - shutdown
+    - halt
+    - mail
+    - operator
+    - games
+    - ftp
+    - nobody
+    - systemd-network
+    - dbus
+    - polkitd
+    - sshd
+    - postfix
+    - chrony
+    - tss
+    - systemd-timesync
+    - tcpdump
+    - systemd-coredump
+    - libstoragemgmt
+    - cockpit-ws
+    - cockpit-wsinstance
+    - setroubleshoot
+    - clevis
+    - sssd

@@ -95,3 +95,114 @@
     owner: root
     group: root
     mode: '0700'
+
+#  Accounts
+## Remove unused user accounts
+- name: Find users inactive for more than {{ inactivity_days }} days
+  shell: |
+    lastlog -b {{ inactivity_days }} | awk '{if (NR>1) print $1}' | grep -v -E '{{ excluded_users | join("|") }}' || true
+  register: inactive_users
+  ignore_errors: yes
+
+- name: Exclude users with running processes
+  shell: |
+    for user in {{ inactive_users.stdout_lines | join(" ") }}; do
+      if ps -U $user > /dev/null 2>&1; then
+        echo $user
+      fi
+    done
+  register: users_with_processes
+
+- name: Filter out users with running processes from the removal list
+  set_fact:
+    final_users_to_remove: "{{ inactive_users.stdout_lines | difference(users_with_processes.stdout_lines) }}"
+
+- name: Debug list of final users to remove
+  debug:
+    msg: "{{ final_users_to_remove }}"
+
+- name: Remove inactive users
+  user:
+    name: "{{ item }}"
+    state: absent
+    remove: yes  # Supprimer également le répertoire home de l'utilisateur
+  loop: "{{ final_users_to_remove }}"
+  when: final_users_to_remove is defined and final_users_to_remove|length > 0
+## Userpassword strength
+- name: Ensure password policies are enforced
+  lineinfile:
+    path: /etc/pam.d/system-auth
+    regexp: '^password\s+requisite\s+pam_pwquality\.so'
+    line: 'password requisite pam_pwquality.so retry=3 minlen=12 dcredit=-1 ucredit=-1 ocredit=-1 lcredit=-1'
+  notify: reload_pam
+
+- name: Ensure password reuse is restricted
+  lineinfile:
+    path: /etc/pam.d/system-auth
+    regexp: '^password\s+sufficient\s+pam_unix\.so'
+    line: 'password sufficient pam_unix.so sha512 shadow try_first_pass use_authtok remember=5'
+  notify: reload_pam
+
+## Configuring a timeout on local user sessions, to check : "echo $TMOUT"
+- name: Ensure vlock is installed
+  yum:
+    name: vlock
+    state: present
+
+- name: Set TMOUT for CLI sessions in /etc/profile
+  lineinfile:
+    path: /etc/profile
+    line: "export TMOUT={{ inactivity_timeout }}; readonly TMOUT; export LOCK_TTY=1"
+    create: yes
+    state: present
+
+## Ensuring the imputability of administration actions
+- name: Configure sudo for admin users
+  copy:
+    dest: "{{ sudoers_file }}"
+    content: |
+      # Sudo configuration for admin users
+      %wheel ALL=(ALL) NOPASSWD: ALL
+    mode: '0440'
+  notify:
+    - Validate sudoers configuration
+
+- name: Disable root account
+  user:
+    name: root
+    shell: /sbin/nologin
+
+- name: Set auditd rules to log all process creations
+  copy:
+    dest: "{{ auditd_rules_file }}"
+    content: |
+      -a exit,always -F arch=b64 -S execve,execveat
+      -a exit,always -F arch=b32 -S execve,execveat
+  notify:
+    - Restart auditd
+
+## Services accounts
+- name: "Disable shell access for service accounts"
+  user:
+    name: "{{ item.name }}"
+    shell: "{{ item.shell }}"
+  loop: "{{ service_accounts }}"
+  when: item.action is not defined or item.action != 'disable'
+
+- name: Ensure 'nobody' account is not used by multiple services
+  shell: |
+    for service in $(ps -eo user,comm | grep nobody | awk '{print $2}' | uniq); do
+      echo "Service $service is using the nobody account. Consider configuring a unique user for it."
+    done
+  when: item.name == 'nobody'
+  loop: "{{ service_accounts }}"
+
+- name: Disable 'nobody' account from opening a shell
+  user:
+    name: "{{ item.name }}"
+    shell: /sbin/nologin
+  when: item.name == 'nobody'
+  loop: "{{ service_accounts }}"
+
+## Access Control
+

@@ -1,0 +1,10 @@
+---
+- name: reload_pam
+  command: systemctl restart sshd
+
+- name: Validate sudoers configuration
+  command: "visudo -c -f {{ sudoers_file }}"
+  ignore_errors: true  # Permet de continuer même si une erreur est détectée
+
+- name: Reload auditd rules
+  command: "augenrules --load"
