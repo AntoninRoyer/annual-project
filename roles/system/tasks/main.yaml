@@ -183,12 +183,13 @@
     state: present
     validate: 'visudo -cf %s'
 
-- name: Vérifier les permissions et durcir le binaire sudo
-  file:
-    path: /usr/bin/sudo
-    owner: root
-    group: root
-    mode: '4750'
+# - name: Vérifier les permissions et durcir le binaire sudo
+#   file:
+#     path: /usr/bin/sudo
+#     owner: root
+#     group: root
+#     mode: '4750'
 
-# TODO: Add custom sudo group
+
+# TODO: R38+39+40 but the sudo causes crashes in the playbook
 
