@@ -16,3 +16,11 @@ services_list:
                - gdm
                - power-profiles-daemon
                - wpa_supplicant
+
+capabilities_map:
+      /usr/bin/newgidmap: cap_setgid
+      /usr/bin/newuidmap: cap_setuid
+      /usr/bin/arping: cap_net_raw
+      /usr/bin/clockdiff: cap_net_raw
+      /usr/bin/gnome-keyring-daemon: cap_ipc_lock
+      /usr/sbin/mtr-packet: cap_net_raw

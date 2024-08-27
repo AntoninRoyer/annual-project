@@ -7,7 +7,15 @@
   loop: "{{ services_list }}"
 
 
-# - name: "Disabling non-essential features of services"
+- name: "Disabling non-essential features of services"
+  community.general.capabilities:
+    path: "{{ item.key }}"
+    state: absent
+    capability: "{{ item.value }}"
+  loop: "{{ capabilities_map | dict2items }}"
+
+
+
 
 # - name: "Configuring the privileges of the services"
 
