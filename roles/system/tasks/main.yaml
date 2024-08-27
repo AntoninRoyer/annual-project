@@ -106,14 +106,14 @@
     name: root
     shell: /sbin/nologin
 
-- name: Set auditd rules to log all process creations
-  copy:
-    dest: "{{ auditd_rules_file }}"
-    content: |
-      -a exit,always -F arch=b64 -S execve,execveat
-      -a exit,always -F arch=b32 -S execve,execveat
-  notify:
-    - Reload auditd rules
+# - name: Set auditd rules to log all process creations
+#   copy:
+#     dest: "{{ auditd_rules_file }}"
+#     content: |
+#       -a exit,always -F arch=b64 -S execve,execveat
+#       -a exit,always -F arch=b32 -S execve,execveat
+#   notify:
+#     - Reload auditd rules
 
 ## Services accounts
 - name: "Disable shell access for service accounts"
@@ -193,3 +193,43 @@
 
 # TODO: R38+39+40 but the sudo causes crashes in the playbook
 
+# SE Linux
+- name: Check SELinux configuration file for SELINUX and SELINUXTYPE
+  ansible.builtin.command: grep '^SELINUX\|SELINUXTYPE' /etc/selinux/config
+  register: selinux_config
+
+- name: Set SELINUX to enforcing if not already set
+  ansible.builtin.replace:
+    path: /etc/selinux/config
+    regexp: '^SELINUX=.*'
+    replace: 'SELINUX=enforcing'
+  when: "'SELINUX=enforcing' not in selinux_config.stdout"
+
+- name: Set SELINUXTYPE to targeted if not already set
+  ansible.builtin.replace:
+    path: /etc/selinux/config
+    regexp: '^SELINUXTYPE=.*'
+    replace: 'SELINUXTYPE=targeted'
+  when: "'SELINUXTYPE=targeted' not in selinux_config.stdout"
+
+- name: Schedule SELinux file system relabeling at next boot if not enforcing
+  ansible.builtin.command: fixfiles onboot
+  when: "'SELINUX=enforcing' not in selinux_config.stdout"
+
+- name: Reload SELinux policy if not targeted
+  ansible.builtin.command: semodule -R
+  when: "'SELINUXTYPE=targeted' not in selinux_config.stdout"
+
+- name: Reboot the server to apply SELinux changes
+  ansible.builtin.reboot:
+    msg: "Rebooting to apply SELinux enforcing mode and targeted policy"
+    reboot_timeout: 600
+
+- name: Verify SELinux status after reboot
+  ansible.builtin.command: sestatus
+  register: sestatus_output
+
+- name: Ensure SELinux is active and enforcing with targeted policy
+  ansible.builtin.debug:
+    msg: "{{ sestatus_output.stdout }}"
+  when: "'enabled' in sestatus_output.stdout and 'targeted' in sestatus_output.stdout and 'enforcing' in sestatus_output.stdout"

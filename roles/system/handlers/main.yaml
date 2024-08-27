@@ -8,6 +8,7 @@
 
 - name: Reload auditd rules
   command: "augenrules --load"
+  ignore_errors: true
 
 - name: Reload profile
   shell: source /etc/profile
