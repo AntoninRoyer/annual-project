@@ -265,3 +265,67 @@
     state: absent
   ignore_errors: yes
 
+#  Files permissions
+- name: Exécuter la commande find pour les fichiers sans utilisateur ou groupe
+  shell: find / -type f \( -nouser -o -nogroup \) -ls 2>/dev/null
+  register: find_output
+  failed_when: find_output.rc != 0 and find_output.stdout != ""
+
+- name: Afficher les résultats de la commande find
+  debug:
+    msg: "{{ find_output.stdout_lines }}"
+  when: find_output.stdout_lines | length > 0
+
+- name: Lister les répertoires modifiables par tous sans sticky bit
+  shell: find / -type d \( -perm -0002 -a \! -perm -1000 \) -ls 2>/dev/null
+  register: dirs_without_sticky_bit
+  failed_when: dirs_without_sticky_bit.rc != 0 and dirs_without_sticky_bit.stdout != ""
+
+- name: Afficher les répertoires sans sticky bit trouvés
+  debug:
+    msg: "{{ dirs_without_sticky_bit.stdout_lines }}"
+  when: dirs_without_sticky_bit.stdout_lines | length > 0
+
+- name: Lister les répertoires modifiables par tous dont le propriétaire n'est pas root
+  shell: find / -type d -perm -0002 -a \! -uid 0 -ls 2>/dev/null
+  register: dirs_not_owned_by_root
+  failed_when: dirs_not_owned_by_root.rc != 0 and dirs_not_owned_by_root.stdout != ""
+
+- name: Afficher les répertoires non possédés par root trouvés
+  debug:
+    msg: "{{ dirs_not_owned_by_root.stdout_lines }}"
+  when: dirs_not_owned_by_root.stdout_lines | length > 0
+
+- name: Lister les fichiers éditables par tout le monde, en excluant /proc et /sys
+  shell: find / -path /proc -prune -o -path /sys -prune -o -type f -perm -0002 -ls 2>/dev/null
+  register: world_writable_files
+  failed_when: world_writable_files.rc != 0 and world_writable_files.stdout != ""
+
+- name: Afficher les fichiers éditables par tout le monde
+  debug:
+    msg: "{{ world_writable_files.stdout_lines }}"
+  when: world_writable_files.stdout_lines | length > 0
+
+
+- name: Lister les exécutables avec setuid ou setgid
+  shell: find / -type f \( -perm -4000 -o -perm -2000 \) -ls 2>/dev/null
+  register: suid_sgid_files
+  failed_when: suid_sgid_files.rc != 0 and suid_sgid_files.stdout == ""
+  changed_when: suid_sgid_files.stdout != ""
+
+- name: Afficher les exécutables avec setuid ou setgid
+  debug:
+    msg: "{{ suid_sgid_files.stdout_lines }}"
+  when: suid_sgid_files.stdout_lines | length > 0
+
+- name: Lister les fichiers avec setuid ou setgid (perm /6000)
+  shell: find / -type f -perm /6000 -ls 2>/dev/null
+  register: suid_sgid_files_6000
+  failed_when: suid_sgid_files_6000.rc != 0 and suid_sgid_files_6000.stdout == ""
+  changed_when: suid_sgid_files_6000.stdout != ""
+
+- name: Afficher les fichiers avec setuid ou setgid trouvés
+  debug:
+    msg: "{{ suid_sgid_files_6000.stdout_lines }}"
+  when: suid_sgid_files_6000.stdout_lines | length > 0
+
