@@ -5,5 +5,4 @@
     # - hardware
     # - kernel
     - system
-    - services
-    # add roles for standard configuration here
+    # - services
