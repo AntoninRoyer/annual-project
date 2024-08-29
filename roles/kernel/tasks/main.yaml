@@ -10,9 +10,30 @@
 
 - name: Mettre à jour la configuration de GRUB
   command: grub2-mkconfig -o /boot/grub2/grub.cfg
+  notify:
+    - Redémarrer pour appliquer les changements
 
-- name: Redémarrer la machine pour appliquer les changements
-  reboot:
-    msg: "Rebooting after GRUB password change"
-    pre_reboot_delay: 10
-    post_reboot_delay: 30
+# Secure boot
+
+# IOMMU
+- name: Ensure 'iommu=force' is in GRUB_CMDLINE_LINUX
+  lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_CMDLINE_LINUX='
+    line: "GRUB_CMDLINE_LINUX=\"iommu=force {{ grub_cmdline_linux }}\""
+  vars:
+    grub_cmdline_linux: "{{ lookup('pipe', 'grep ^GRUB_CMDLINE_LINUX= /etc/default/grub | cut -d\\\" -f2') }}"
+  notify:
+    - Update GRUB
+
+
+- name: Ensure 'iommu=force' is added to /boot/grub/menu.lst (if exists)
+  lineinfile:
+    path: /boot/grub/menu.lst
+    regexp: '^kernel'
+    line: "kernel /vmlinuz-$(uname -r) iommu=force"
+  when: ansible_facts['os_family'] == 'RedHat' and ansible_facts['distribution_version'] < '8.0'
+  ignore_errors: yes
+  notify:
+    - Update GRUB
+
