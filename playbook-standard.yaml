@@ -3,6 +3,6 @@
   hosts: alma
   roles:
     # - hardware
-    # - kernel
-    - system
+    - kernel
+    # - system
     # - services
