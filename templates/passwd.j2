@@ -1,0 +1,8 @@
+#%PAM-1.0
+# This tool only uses the password stack.
+password   substack	system-auth
+-password   optional	pam_gnome_keyring.so use_authtok
+password   substack	postlogin
+password required pam_pwquality.so minlen=4 minclass=3 \
+dcredit=0 ucredit=0 lcredit=0 \
+ocredit=0 maxrepeat=1
