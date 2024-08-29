@@ -63,3 +63,97 @@
   notify:
     - Update GRUB
     - Redémarrer pour appliquer les changements
+
+# Kernel options
+- name: Restrict access to the dmesg buffer
+  sysctl:
+    name: kernel.dmesg_restrict
+    value: 1
+    sysctl_set: yes
+    state: present
+
+- name: Hide kernel addresses in /proc and other interfaces
+  sysctl:
+    name: kernel.kptr_restrict
+    value: 2
+    sysctl_set: yes
+    state: present
+
+- name: Set maximum process ID
+  sysctl:
+    name: kernel.pid_max
+    value: 65536
+    sysctl_set: yes
+    state: present
+
+- name: Restrict the use of the perf subsystem
+  sysctl:
+    name: kernel.perf_cpu_time_max_percent
+    value: 1
+    sysctl_set: yes
+    state: present
+
+- name: Set maximum perf event sample rate
+  sysctl:
+    name: kernel.perf_event_max_sample_rate
+    value: 1
+    sysctl_set: yes
+    state: present
+
+- name: Restrict unprivileged access to perf_event_open
+  sysctl:
+    name: kernel.perf_event_paranoid
+    value: 2
+    sysctl_set: yes
+    state: present
+
+- name: Enable ASLR
+  sysctl:
+    name: kernel.randomize_va_space
+    value: 2
+    sysctl_set: yes
+    state: present
+
+- name: Disable Magic SysRq key combinations
+  sysctl:
+    name: kernel.sysrq
+    value: 0
+    sysctl_set: yes
+    state: present
+
+- name: Restrict BPF usage to privileged users
+  sysctl:
+    name: kernel.unprivileged_bpf_disabled
+    value: 1
+    sysctl_set: yes
+    state: present
+
+- name: Panic on kernel oops
+  sysctl:
+    name: kernel.panic_on_oops
+    value: 1
+    sysctl_set: yes
+    state: present
+
+- name: Disable loading of new kernel modules
+  sysctl:
+    name: kernel.modules_disabled
+    value: 1
+    sysctl_set: yes
+    state: present
+  ignore_errors: true  # Ignore errors if modules are already loaded
+  notify:
+    - Reboot if kernel module loading is disabled
+
+- name: Get list of currently loaded kernel modules
+  shell: lsmod | awk 'NR>1 {print $1}'
+  register: loaded_modules
+
+- name: Debug loaded modules
+  debug:
+    var: loaded_modules.stdout_lines
+
+- name: Reload all currently loaded kernel modules
+  command: modprobe {{ item }}
+  with_items: "{{ loaded_modules.stdout_lines }}"
+  ignore_errors: yes
