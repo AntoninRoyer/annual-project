@@ -157,3 +157,12 @@
   command: modprobe {{ item }}
   with_items: "{{ loaded_modules.stdout_lines }}"
   ignore_errors: yes
+
+# Yama LSM
+- name: Set kernel.yama.ptrace_scope to restrict ptrace usage
+  sysctl:
+    name: kernel.yama.ptrace_scope
+    value: 1  # Change this value according to your security requirement
+    sysctl_set: yes
+    state: present
+    reload: yes
