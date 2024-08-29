@@ -355,4 +355,39 @@
   notify:
     - Redémarrer pour appliquer les changements
 
+# File system configuration options
+- name: Disable coredump creation for setuid executables
+  sysctl:
+    name: fs.suid_dumpable
+    value: 0
+    sysctl_set: yes
+    state: present
+
+- name: Prohibit opening FIFOs and files not owned by the user in sticky directories
+  sysctl:
+    name: fs.protected_fifos
+    value: 2
+    sysctl_set: yes
+    state: present
+
+- name: Prohibit opening regular files not owned by the user in sticky directories
+  sysctl:
+    name: fs.protected_regular
+    value: 2
+    sysctl_set: yes
+    state: present
+
+- name: Restrict creation of symbolic links to files owned by the user
+  sysctl:
+    name: fs.protected_symlinks
+    value: 1
+    sysctl_set: yes
+    state: present
+
+- name: Restrict creation of hard links to files owned by the user
+  sysctl:
+    name: fs.protected_hardlinks
+    value: 1
+    sysctl_set: yes
+    state: present
 
