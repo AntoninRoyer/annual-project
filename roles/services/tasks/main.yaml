@@ -70,9 +70,92 @@
     mode: '0644'
 
 
-# - name: "Protecting the stored passwords"
+- name: "Protecting the stored passwords"
+  ansible.builtin.lineinfile:
+      path: /etc/login.defs
+      regexp: '^ENCRYPT_METHOD'
+      line: 'ENCRYPT_METHOD SHA512'
+      state: present
 
-# - name: "Securingaccess to remote user databases"
+- name: Configure PAM for strong hashing in system-auth
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/system-auth
+    regexp: '^password.*pam_unix.so'
+    line: 'password    sufficient    pam_unix.so sha512 shadow try_first_pass use_authtok'
+    state: present
+
+- name: Configure PAM for strong hashing in password-auth
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/password-auth
+    regexp: '^password.*pam_unix.so'
+    line: 'password    sufficient    pam_unix.so sha512 shadow try_first_pass use_authtok'
+    state: present
+
+- name: Configure password quality policies
+  ansible.builtin.lineinfile:
+    path: /etc/security/pwquality.conf
+    regexp: '^minlen'
+    line: 'minlen = 7'
+    state: present
+
+- name: Configure password aging policies
+  ansible.builtin.lineinfile:
+    path: /etc/login.defs
+    regexp: '^PASS_MAX_DAYS'
+    line: 'PASS_MAX_DAYS 90'
+    state: present
+
+- name: Restrict access to /etc/shadow
+  ansible.builtin.file:
+    path: /etc/shadow
+    owner: root
+    group: wheel
+    mode: '0600'
+
+- name: Install and configure auditd
+  ansible.builtin.dnf:
+    name: audit
+    state: present
+
+- name: Add audit rules for password file monitoring
+  ansible.builtin.blockinfile:
+    path: /etc/audit/rules.d/audit.rules
+    block: |
+      -w /etc/shadow -p wa -k passwd_changes
+      -w /etc/passwd -p wa -k passwd_changes
+
+- name: "Securing access to remote user databases"
+  ansible.builtin.dnf:
+    name:
+      - sssd
+      - sssd-client
+    state: present
+
+- name: Configure SSSD
+  ansible.builtin.template:
+    src: sssd.conf.j2
+    dest: /etc/sssd/sssd.conf
+    owner: root
+    group: wheel
+    mode: '0600'
+
+
+- name: Configure NSS to use SSSD
+  ansible.builtin.lineinfile:
+    path: /etc/nsswitch.conf
+    regexp: '^passwd:'
+    line: 'passwd:     files sss'
+    state: present
+
+- name: Secure SSSD configuration
+  ansible.builtin.file:
+    path: /etc/sssd/sssd.conf
+    owner: root
+    group: wheel
+    mode: '0600'
+
+
+
 
 # - name: "Separating the system accounts and directory administrator"
 
