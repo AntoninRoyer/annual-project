@@ -135,28 +135,28 @@
     sysctl_set: yes
     state: present
 
-- name: Disable loading of new kernel modules
-  sysctl:
-    name: kernel.modules_disabled
-    value: 1
-    sysctl_set: yes
-    state: present
-  ignore_errors: true  # Ignore errors if modules are already loaded
-  notify:
-    - Reboot if kernel module loading is disabled
+# - name: Disable loading of new kernel modules
+#   sysctl:
+#     name: kernel.modules_disabled
+#     value: 1
+#     sysctl_set: yes
+#     state: present
+#   ignore_errors: true  # Ignore errors if modules are already loaded
+#   notify:
+#     - Reboot if kernel module loading is disabled
 
-- name: Get list of currently loaded kernel modules
-  shell: lsmod | awk 'NR>1 {print $1}'
-  register: loaded_modules
+# - name: Get list of currently loaded kernel modules
+#   shell: lsmod | awk 'NR>1 {print $1}'
+#   register: loaded_modules
 
-- name: Debug loaded modules
-  debug:
-    var: loaded_modules.stdout_lines
+# - name: Debug loaded modules
+#   debug:
+#     var: loaded_modules.stdout_lines
 
-- name: Reload all currently loaded kernel modules
-  command: modprobe {{ item }}
-  with_items: "{{ loaded_modules.stdout_lines }}"
-  ignore_errors: yes
+# - name: Reload all currently loaded kernel modules
+#   command: modprobe {{ item }}
+#   with_items: "{{ loaded_modules.stdout_lines }}"
+#   ignore_errors: yes
 
 # Yama LSM
 - name: Set kernel.yama.ptrace_scope to restrict ptrace usage
