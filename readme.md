@@ -21,6 +21,12 @@ Run the playbook init and enter the password of the ansible user of the client V
 ```bash
 ansible-playbook playbook-init.yaml -k
 ```
+
+Run the playbook standard to launch the taks of the standard secure profile:
+```bash
+ansible-playbook playbook-standard.yaml
+```
+
 ## Authors
 - Antonin Royer
 - Alisson Creiche
