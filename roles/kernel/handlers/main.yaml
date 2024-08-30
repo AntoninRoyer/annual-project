@@ -1,0 +1,13 @@
+- name: Update GRUB
+  command: grub2-mkconfig -o /boot/grub2/grub.cfg
+
+- name: Redémarrer pour appliquer les changements
+  reboot:
+    msg: "Rebooting after updating GRUB configuration and unified kernel image."
+    pre_reboot_delay: 10
+    post_reboot_delay: 30
+
+- name: Reboot if kernel module loading is disabled
+  reboot:
+    msg: "Rebooting to apply kernel.modules_disabled."
+    reboot_timeout: 120

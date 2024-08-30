@@ -1,8 +1,393 @@
 ---
-- name: Add grub password
-  community.general.grub_passwd:
-    password: "{{ grub_password }}"
-    target: "/etc/grub.d/40_custom"
-    update_grub: true
-    force: true
-  when: grub_password is defined
+# Grub password
+- name: Ajouter le mot de passe GRUB haché au fichier de configuration
+  lineinfile:
+    path: /etc/grub.d/40_custom
+    line: |
+      set superusers="root"
+      password_pbkdf2 root {{ grub_password }}
+    create: yes
+
+- name: Mettre à jour la configuration de GRUB
+  command: grub2-mkconfig -o /boot/grub2/grub.cfg
+  notify:
+    - Redémarrer pour appliquer les changements
+
+# Secure boot
+
+# IOMMU
+- name: Ensure 'iommu=force' is in GRUB_CMDLINE_LINUX
+  lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_CMDLINE_LINUX='
+    line: "GRUB_CMDLINE_LINUX=\"iommu=force {{ grub_cmdline_linux }}\""
+  vars:
+    grub_cmdline_linux: "{{ lookup('pipe', 'grep ^GRUB_CMDLINE_LINUX= /etc/default/grub | cut -d\\\" -f2') }}"
+  notify:
+    - Update GRUB
+
+
+- name: Ensure 'iommu=force' is added to /boot/grub/menu.lst (if exists)
+  lineinfile:
+    path: /boot/grub/menu.lst
+    regexp: '^kernel'
+    line: "kernel /vmlinuz-$(uname -r) iommu=force"
+  when: ansible_facts['os_family'] == 'RedHat' and ansible_facts['distribution_version'] < '8.0'
+  ignore_errors: yes
+  notify:
+    - Update GRUB
+
+# Memory options
+- name: Extract current GRUB_CMDLINE_LINUX value
+  shell: grep ^GRUB_CMDLINE_LINUX= /etc/default/grub | cut -d'"' -f2
+  register: grub_cmdline_linux_value
+
+- name: Ensure required kernel parameters are in GRUB_CMDLINE_LINUX
+  lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_CMDLINE_LINUX='
+    line: "GRUB_CMDLINE_LINUX=\"{{ grub_cmdline_linux_value.stdout }} {{ additional_kernel_params | join(' ') }}\""
+  vars:
+    additional_kernel_params:
+      - l1tf=full,force
+      - page_poison=on
+      - pti=on
+      - slab_nomerge=yes
+      - slub_debug=FZP
+      - spec_store_bypass_disable=seccomp
+      - spectre_v2=on
+      - mds=full,nosmt
+      - mce=0
+      - page_alloc.shuffle=1
+      - rng_core.default_quality=500
+  notify:
+    - Update GRUB
+    - Redémarrer pour appliquer les changements
+
+# Kernel options
+- name: Restrict access to the dmesg buffer
+  sysctl:
+    name: kernel.dmesg_restrict
+    value: 1
+    sysctl_set: yes
+    state: present
+
+- name: Hide kernel addresses in /proc and other interfaces
+  sysctl:
+    name: kernel.kptr_restrict
+    value: 2
+    sysctl_set: yes
+    state: present
+
+- name: Set maximum process ID
+  sysctl:
+    name: kernel.pid_max
+    value: 65536
+    sysctl_set: yes
+    state: present
+
+- name: Restrict the use of the perf subsystem
+  sysctl:
+    name: kernel.perf_cpu_time_max_percent
+    value: 1
+    sysctl_set: yes
+    state: present
+
+- name: Set maximum perf event sample rate
+  sysctl:
+    name: kernel.perf_event_max_sample_rate
+    value: 1
+    sysctl_set: yes
+    state: present
+
+- name: Restrict unprivileged access to perf_event_open
+  sysctl:
+    name: kernel.perf_event_paranoid
+    value: 2
+    sysctl_set: yes
+    state: present
+
+- name: Enable ASLR
+  sysctl:
+    name: kernel.randomize_va_space
+    value: 2
+    sysctl_set: yes
+    state: present
+
+- name: Disable Magic SysRq key combinations
+  sysctl:
+    name: kernel.sysrq
+    value: 0
+    sysctl_set: yes
+    state: present
+
+- name: Restrict BPF usage to privileged users
+  sysctl:
+    name: kernel.unprivileged_bpf_disabled
+    value: 1
+    sysctl_set: yes
+    state: present
+
+- name: Panic on kernel oops
+  sysctl:
+    name: kernel.panic_on_oops
+    value: 1
+    sysctl_set: yes
+    state: present
+
+# - name: Disable loading of new kernel modules
+#   sysctl:
+#     name: kernel.modules_disabled
+#     value: 1
+#     sysctl_set: yes
+#     state: present
+#   ignore_errors: true  # Ignore errors if modules are already loaded
+#   notify:
+#     - Reboot if kernel module loading is disabled
+
+# - name: Get list of currently loaded kernel modules
+#   shell: lsmod | awk 'NR>1 {print $1}'
+#   register: loaded_modules
+
+# - name: Debug loaded modules
+#   debug:
+#     var: loaded_modules.stdout_lines
+
+# - name: Reload all currently loaded kernel modules
+#   command: modprobe {{ item }}
+#   with_items: "{{ loaded_modules.stdout_lines }}"
+#   ignore_errors: yes
+
+# Yama LSM
+- name: Set kernel.yama.ptrace_scope to restrict ptrace usage
+  sysctl:
+    name: kernel.yama.ptrace_scope
+    value: 1  # Change this value according to your security requirement
+    sysctl_set: yes
+    state: present
+    reload: yes
+
+# IPV4
+- name: Mitigate JIT dispersion effect
+  sysctl:
+    name: net.core.bpf_jit_harden
+    value: 2
+    sysctl_set: yes
+    state: present
+
+- name: Disable IP forwarding
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: 0
+    sysctl_set: yes
+    state: present
+
+- name: Reject packets with a source address from 127/8 network
+  sysctl:
+    name: net.ipv4.conf.all.accept_local
+    value: 0
+    sysctl_set: yes
+    state: present
+
+- name: Deny ICMP redirect packets
+  sysctl:
+    name: net.ipv4.conf.all.accept_redirects
+    value: 0
+    sysctl_set: yes
+    state: present
+
+- name: Deny ICMP redirect packets (default)
+  sysctl:
+    name: net.ipv4.conf.default.accept_redirects
+    value: 0
+    sysctl_set: yes
+    state: present
+
+- name: Disable secure ICMP redirects
+  sysctl:
+    name: net.ipv4.conf.all.secure_redirects
+    value: 0
+    sysctl_set: yes
+    state: present
+
+- name: Disable secure ICMP redirects (default)
+  sysctl:
+    name: net.ipv4.conf.default.secure_redirects
+    value: 0
+    sysctl_set: yes
+    state: present
+
+- name: Disable shared media
+  sysctl:
+    name: net.ipv4.conf.all.shared_media
+    value: 0
+    sysctl_set: yes
+    state: present
+
+- name: Disable shared media (default)
+  sysctl:
+    name: net.ipv4.conf.default.shared_media
+    value: 0
+    sysctl_set: yes
+    state: present
+
+- name: Deny source routing
+  sysctl:
+    name: net.ipv4.conf.all.accept_source_route
+    value: 0
+    sysctl_set: yes
+    state: present
+
+- name: Deny source routing (default)
+  sysctl:
+    name: net.ipv4.conf.default.accept_source_route
+    value: 0
+    sysctl_set: yes
+    state: present
+
+- name: Enable ARP filtering
+  sysctl:
+    name: net.ipv4.conf.all.arp_filter
+    value: 1
+    sysctl_set: yes
+    state: present
+
+- name: Enable ARP ignore
+  sysctl:
+    name: net.ipv4.conf.all.arp_ignore
+    value: 2
+    sysctl_set: yes
+    state: present
+
+- name: Refuse routing of localnet packets
+  sysctl:
+    name: net.ipv4.conf.all.route_localnet
+    value: 0
+    sysctl_set: yes
+    state: present
+
+- name: Ignore gratuitous ARP requests
+  sysctl:
+    name: net.ipv4.conf.all.drop_gratuitous_arp
+    value: 1
+    sysctl_set: yes
+    state: present
+
+- name: Enable reverse path filtering (all)
+  sysctl:
+    name: net.ipv4.conf.all.rp_filter
+    value: 1
+    sysctl_set: yes
+    state: present
+
+- name: Enable reverse path filtering (default)
+  sysctl:
+    name: net.ipv4.conf.default.rp_filter
+    value: 1
+    sysctl_set: yes
+    state: present
+
+- name: Disable send redirects (all)
+  sysctl:
+    name: net.ipv4.conf.all.send_redirects
+    value: 0
+    sysctl_set: yes
+    state: present
+
+- name: Disable send redirects (default)
+  sysctl:
+    name: net.ipv4.conf.default.send_redirects
+    value: 0
+    sysctl_set: yes
+    state: present
+
+- name: Ignore bogus ICMP error responses
+  sysctl:
+    name: net.ipv4.icmp_ignore_bogus_error_responses
+    value: 1
+    sysctl_set: yes
+    state: present
+
+- name: Increase ephemeral port range
+  sysctl:
+    name: net.ipv4.ip_local_port_range
+    value: "32768 65535"
+    sysctl_set: yes
+    state: present
+
+- name: Enable TCP RFC 1337
+  sysctl:
+    name: net.ipv4.tcp_rfc1337
+    value: 1
+    sysctl_set: yes
+    state: present
+
+- name: Enable TCP SYN cookies
+  sysctl:
+    name: net.ipv4.tcp_syncookies
+    value: 1
+    sysctl_set: yes
+    state: present
+
+# Disable IPV6
+- name: Extract current GRUB_CMDLINE_LINUX value2
+  shell: grep '^GRUB_CMDLINE_LINUX=' /etc/default/grub | cut -d'"' -f2
+  register: grub_cmdline_linux_value
+
+- name: Add ipv6.disable=1 to GRUB_CMDLINE_LINUX
+  lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_CMDLINE_LINUX='
+    line: 'GRUB_CMDLINE_LINUX="ipv6.disable=1 {{ grub_cmdline_linux_value.stdout }}"'
+  notify:
+    - Update GRUB
+    - Redémarrer pour appliquer les changements
+
+- name: Disable IPv6 in sysctl.conf
+  sysctl:
+    name: "{{ item }}"
+    value: 1
+    sysctl_set: yes
+    state: present
+  with_items:
+    - net.ipv6.conf.default.disable_ipv6
+    - net.ipv6.conf.all.disable_ipv6
+  notify:
+    - Redémarrer pour appliquer les changements
+
+# File system configuration options
+- name: Disable coredump creation for setuid executables
+  sysctl:
+    name: fs.suid_dumpable
+    value: 0
+    sysctl_set: yes
+    state: present
+
+- name: Prohibit opening FIFOs and files not owned by the user in sticky directories
+  sysctl:
+    name: fs.protected_fifos
+    value: 2
+    sysctl_set: yes
+    state: present
+
+- name: Prohibit opening regular files not owned by the user in sticky directories
+  sysctl:
+    name: fs.protected_regular
+    value: 2
+    sysctl_set: yes
+    state: present
+
+- name: Restrict creation of symbolic links to files owned by the user
+  sysctl:
+    name: fs.protected_symlinks
+    value: 1
+    sysctl_set: yes
+    state: present
+
+- name: Restrict creation of hard links to files owned by the user
+  sysctl:
+    name: fs.protected_hardlinks
+    value: 1
+    sysctl_set: yes
+    state: present
+
