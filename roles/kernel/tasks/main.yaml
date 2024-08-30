@@ -10,8 +10,8 @@
 
 - name: Mettre à jour la configuration de GRUB
   command: grub2-mkconfig -o /boot/grub2/grub.cfg
-  notify:
-    - Redémarrer pour appliquer les changements
+#  notify:
+#   - Redémarrer pour appliquer les changements
 
 # Secure boot
 
@@ -23,8 +23,8 @@
     line: "GRUB_CMDLINE_LINUX=\"iommu=force {{ grub_cmdline_linux }}\""
   vars:
     grub_cmdline_linux: "{{ lookup('pipe', 'grep ^GRUB_CMDLINE_LINUX= /etc/default/grub | cut -d\\\" -f2') }}"
-  notify:
-    - Update GRUB
+#  notify:
+#    - Update GRUB
 
 
 - name: Ensure 'iommu=force' is added to /boot/grub/menu.lst (if exists)
@@ -34,8 +34,8 @@
     line: "kernel /vmlinuz-$(uname -r) iommu=force"
   when: ansible_facts['os_family'] == 'RedHat' and ansible_facts['distribution_version'] < '8.0'
   ignore_errors: yes
-  notify:
-    - Update GRUB
+#  notify:
+#    - Update GRUB
 
 # Memory options
 - name: Extract current GRUB_CMDLINE_LINUX value
@@ -60,9 +60,9 @@
       - mce=0
       - page_alloc.shuffle=1
       - rng_core.default_quality=500
-  notify:
-    - Update GRUB
-    - Redémarrer pour appliquer les changements
+#  notify:
+#    - Update GRUB
+#     - Redémarrer pour appliquer les changements
 
 # Kernel options
 - name: Restrict access to the dmesg buffer
@@ -339,9 +339,9 @@
     path: /etc/default/grub
     regexp: '^GRUB_CMDLINE_LINUX='
     line: 'GRUB_CMDLINE_LINUX="ipv6.disable=1 {{ grub_cmdline_linux_value.stdout }}"'
-  notify:
-    - Update GRUB
-    - Redémarrer pour appliquer les changements
+#  notify:
+#    - Update GRUB
+#    - Redémarrer pour appliquer les changements
 
 - name: Disable IPv6 in sysctl.conf
   sysctl:
@@ -352,8 +352,8 @@
   with_items:
     - net.ipv6.conf.default.disable_ipv6
     - net.ipv6.conf.all.disable_ipv6
-  notify:
-    - Redémarrer pour appliquer les changements
+#  notify:
+#   - Redémarrer pour appliquer les changements
 
 # File system configuration options
 - name: Disable coredump creation for setuid executables
@@ -391,3 +391,11 @@
     sysctl_set: yes
     state: present
 
+- name: Update GRUB
+  command: grub2-mkconfig -o /boot/grub2/grub.cfg
+
+- name: Redémarrer pour appliquer les changements
+  reboot:
+    msg: "Rebooting after updating GRUB configuration and unified kernel image."
+    pre_reboot_delay: 10
+    post_reboot_delay: 30

@@ -90,7 +90,7 @@
     create: yes
     state: present
 
-## Ensuring the imputability of administration actions
+# ## Ensuring the imputability of administration actions
 - name: Configure sudo for admin users
   copy:
     dest: "{{ sudoers_file }}"
@@ -115,7 +115,7 @@
   notify:
     - Reload auditd rules
 
-## Services accounts
+# ## Services accounts
 - name: "Disable shell access for service accounts"
   user:
     name: "{{ item.name }}"
@@ -137,7 +137,7 @@
     shell: /sbin/nologin
 
 
-## Access Control
+# ## Access Control
 - name: S'assurer que la valeur umask est définie dans /etc/profile
   lineinfile:
     path: /etc/profile
@@ -183,12 +183,12 @@
     state: present
     validate: 'visudo -cf %s'
 
-# - name: Vérifier les permissions et durcir le binaire sudo
-#   file:
-#     path: /usr/bin/sudo
-#     owner: root
-#     group: root
-#     mode: '4750'
+# # - name: Vérifier les permissions et durcir le binaire sudo
+# #   file:
+# #     path: /usr/bin/sudo
+# #     owner: root
+# #     group: root
+# #     mode: '4750'
 
 
 # TODO: R38+39+40 but the sudo causes crashes in the playbook
@@ -222,11 +222,11 @@
     state: false
     persistent: yes
 
-- name: Activer secure_mode_insmod (Prévenir le chargement dynamique de modules par les processus)
-  seboolean:
-    name: secure_mode_insmod
-    state: true
-    persistent: yes
+# - name: Activer secure_mode_insmod (Prévenir le chargement dynamique de modules par les processus)
+#   seboolean:
+#     name: secure_mode_insmod
+#     state: true
+#     persistent: yes
 
 - name: Désactiver ssh_sysadm_login (Empêcher les connexions SSH d'accéder directement au rôle sysadmin)
   seboolean:
@@ -328,4 +328,10 @@
   debug:
     msg: "{{ suid_sgid_files_6000.stdout_lines }}"
   when: suid_sgid_files_6000.stdout_lines | length > 0
+
+
+# - name: echo to notify
+#   command: echo "Rebooting after updating GRUB configuration and unified kernel image."
+#   notify:
+#     - reboot
 

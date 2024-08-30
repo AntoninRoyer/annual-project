@@ -12,3 +12,7 @@
 
 - name: Reload profile
   shell: source /etc/profile
+
+- name: reboot
+  reboot:
+    msg: "Rebooting after updating GRUB configuration and unified kernel image."
