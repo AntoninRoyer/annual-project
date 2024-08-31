@@ -4,4 +4,4 @@
   roles:
     - kernel
     - system
-    # - services
+    - services
