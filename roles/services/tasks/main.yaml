@@ -1,18 +1,18 @@
 ---
-# - name: Disabling and stopping the non-necessary services
-#   ansible.builtin.systemd:
-#     name: "{{ item }}"
-#     enabled: false
-#     state: stopped
-#   loop: "{{ services_list }}"
+- name: Disabling and stopping the non-necessary services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: false
+    state: stopped
+  loop: "{{ services_list }}"
 
 
-# - name: "Disabling non-essential features of services"
-#   community.general.capabilities:
-#     path: "{{ item.key }}"
-#     state: absent
-#     capability: "{{ item.value }}"
-#   loop: "{{ capabilities_map | dict2items }}"
+- name: "Disabling non-essential features of services"
+  community.general.capabilities:
+    path: "{{ item.key }}"
+    state: absent
+    capability: "{{ item.value }}"
+  loop: "{{ capabilities_map | dict2items }}"
 
 # # - name: "Configuring the privileges of the services"
 
@@ -21,180 +21,167 @@
 # # - name: "Hardening the partitioning components"
 
 # # Limit the elevation to root via su to the members of the group 'wheel ' only part 1
-# - name: "Secure remote authentication with PAM 1"
-#   ansible.builtin.template:
-#     src: su.j2
-#     dest: /etc/pam.d/su
-#     owner: root
-#     group: wheel
-#     mode: '0644'
+- name: "Secure remote authentication with PAM 1"
+  ansible.builtin.template:
+    src: su.j2
+    dest: /etc/pam.d/su
+    owner: root
+    group: wheel
+    mode: '0644'
 
 
 # # Limit the elevation to root via su to the members of the group 'wheel ' only part 2
-# - name: "Secure remote authentication with PAM 2"
-#   ansible.builtin.template:
-#     src: su-l.j2
-#     dest: /etc/pam.d/su-l
-#     owner: root
-#     group: wheel
-#     mode: '0644'
+- name: "Secure remote authentication with PAM 2"
+  ansible.builtin.template:
+    src: su-l.j2
+    dest: /etc/pam.d/su-l
+    owner: root
+    group: wheel
+    mode: '0644'
 
 
 # # At least 12 characters of 3 different classes among the uppercase letters ,
 # # lowercase letters , numbers and others by prohibiting repetition
 # # of a character
-# - name: "Secure remote authentication with PAM 3"
-#   ansible.builtin.template:
-#     src: passwd.j2
-#     dest: /etc/pam.d/passwd
-#     owner: root
-#     group: wheel
-#     mode: '0644'
+- name: "Secure remote authentication with PAM 3"
+  ansible.builtin.template:
+    src: passwd.j2
+    dest: /etc/pam.d/passwd
+    owner: root
+    group: wheel
+    mode: '0644'
 
 # #Account blocking for 5 min after 3 failures part 1
-# - name: "Secure remote authentication with PAM 4"
-#   ansible.builtin.template:
-#     src: passwd.j2
-#     dest: /etc/pam.d/login
-#     owner: root
-#     group: wheel
-#     mode: '0644'
+- name: "Secure remote authentication with PAM 4"
+  ansible.builtin.template:
+    src: passwd.j2
+    dest: /etc/pam.d/login
+    owner: root
+    group: wheel
+    mode: '0644'
 
 # #Account blocking for 5 min after 3 failures part 2
-# - name: "Secure remote authentication with PAM 5"
-#   ansible.builtin.template:
-#     src: sshd.j2
-#     dest: /etc/pam.d/sshd
-#     owner: root
-#     group: wheel
-#     mode: '0644'
+- name: "Secure remote authentication with PAM 5"
+  ansible.builtin.template:
+    src: sshd.j2
+    dest: /etc/pam.d/sshd
+    owner: root
+    group: wheel
+    mode: '0644'
 
 
-# - name: "Protecting the stored passwords"
-#   ansible.builtin.lineinfile:
-#       path: /etc/login.defs
-#       regexp: '^ENCRYPT_METHOD'
-#       line: 'ENCRYPT_METHOD SHA512'
-#       state: present
+- name: "Protecting the stored passwords"
+  ansible.builtin.lineinfile:
+      path: /etc/login.defs
+      regexp: '^ENCRYPT_METHOD'
+      line: 'ENCRYPT_METHOD SHA512'
+      state: present
 
-# - name: Configure PAM for strong hashing in system-auth
-#   ansible.builtin.lineinfile:
-#     path: /etc/pam.d/system-auth
-#     regexp: '^password.*pam_unix.so'
-#     line: 'password    sufficient    pam_unix.so sha512 shadow try_first_pass use_authtok'
-#     state: present
+- name: Configure PAM for strong hashing in system-auth
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/system-auth
+    regexp: '^password.*pam_unix.so'
+    line: 'password    sufficient    pam_unix.so sha512 shadow try_first_pass use_authtok'
+    state: present
 
 # - name: Configure PAM for strong hashing in password-auth
-#   ansible.builtin.lineinfile:
-#     path: /etc/pam.d/password-auth
-#     regexp: '^password.*pam_unix.so'
-#     line: 'password    sufficient    pam_unix.so sha512 shadow try_first_pass use_authtok'
-#     state: present
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/password-auth
+    regexp: '^password.*pam_unix.so'
+    line: 'password    sufficient    pam_unix.so sha512 shadow try_first_pass use_authtok'
+    state: present
 
-# - name: Configure password quality policies
-#   ansible.builtin.lineinfile:
-#     path: /etc/security/pwquality.conf
-#     regexp: '^minlen'
-#     line: 'minlen = 7'
-#     state: present
+- name: Configure password quality policies
+  ansible.builtin.lineinfile:
+    path: /etc/security/pwquality.conf
+    regexp: '^minlen'
+    line: 'minlen = 7'
+    state: present
 
-# - name: Configure password aging policies
-#   ansible.builtin.lineinfile:
-#     path: /etc/login.defs
-#     regexp: '^PASS_MAX_DAYS'
-#     line: 'PASS_MAX_DAYS 90'
-#     state: present
+- name: Configure password aging policies
+  ansible.builtin.lineinfile:
+    path: /etc/login.defs
+    regexp: '^PASS_MAX_DAYS'
+    line: 'PASS_MAX_DAYS 90'
+    state: present
 
-# - name: Restrict access to /etc/shadow
-#   ansible.builtin.file:
-#     path: /etc/shadow
-#     owner: root
-#     group: wheel
-#     mode: '0600'
+- name: Restrict access to /etc/shadow
+  ansible.builtin.file:
+    path: /etc/shadow
+    owner: root
+    group: wheel
+    mode: '0600'
 
-# - name: Install and configure auditd
-#   ansible.builtin.dnf:
-#     name: 
-#       - audit
-#       - audit-libs
-#     state: present
+- name: Install and configure auditd
+  ansible.builtin.dnf:
+    name: 
+      - audit
+      - audit-libs
+    state: present
 
-# - name: Add audit rules for password file monitoring
-#   ansible.builtin.blockinfile:
-#     path: /etc/audit/rules.d/audit.rules
-#     block: |
-#       -w /etc/shadow -p wa -k passwd_changes
-#       -w /etc/passwd -p wa -k passwd_changes
+- name: Add audit rules for password file monitoring
+  ansible.builtin.blockinfile:
+    path: /etc/audit/rules.d/audit.rules
+    block: |
+      -w /etc/shadow -p wa -k passwd_changes
+      -w /etc/passwd -p wa -k passwd_changes
 
-# - name: "Securing access to remote user databases"
-#   ansible.builtin.dnf:
-#     name:
-#       - sssd
-#       - sssd-client
-#     state: present
+- name: "Securing access to remote user databases"
+  ansible.builtin.dnf:
+    name:
+      - sssd
+      - sssd-client
+    state: present
 
-# - name: "Separating the system accounts and directory administrator"
-#   ansible.builtin.template:
-#     src: sssd.conf.j2
-#     dest: /etc/sssd/sssd.conf
-#     owner: root
-#     group: wheel
-#     mode: '0600'
+- name: "Separating the system accounts and directory administrator"
+  ansible.builtin.template:
+    src: sssd.conf.j2
+    dest: /etc/sssd/sssd.conf
+    owner: root
+    group: wheel
+    mode: '0600'
 
 
-# - name: Configure NSS to use SSSD
-#   ansible.builtin.lineinfile:
-#     path: /etc/nsswitch.conf
-#     regexp: '^passwd:'
-#     line: 'passwd:     files sss'
-#     state: present
+- name: Configure NSS to use SSSD
+  ansible.builtin.lineinfile:
+    path: /etc/nsswitch.conf
+    regexp: '^passwd:'
+    line: 'passwd:     files sss'
+    state: present
 
-# - name: Secure SSSD configuration
-#   ansible.builtin.file:
-#     path: /etc/sssd/sssd.conf
-#     owner: root
-#     group: wheel
-#     mode: '0600'
+- name: Secure SSSD configuration
+  ansible.builtin.file:
+    path: /etc/sssd/sssd.conf
+    owner: root
+    group: wheel
+    mode: '0600'
 
 # # - name: "Implementing a logging system"
-# - name: Install rsyslog
-#   ansible.builtin.dnf:
-#     name: rsyslog
-#     state: present
+- name: Install rsyslog
+  ansible.builtin.dnf:
+    name: rsyslog
+    state: present
 
-# - name: Configure rsyslog for local loggin only
-#   ansible.builtin.lineinfile:
-#     path: /etc/rsyslog.conf
-#     regexp: '^\$ModLoad imtcp'
-#     line: '# $ModLoad imtcp' # Disable TCP input
-#     state: present
+- name: Configure rsyslog for local loggin only
+  ansible.builtin.lineinfile:
+    path: /etc/rsyslog.conf
+    regexp: '^\$ModLoad imtcp'
+    line: '# $ModLoad imtcp' # Disable TCP input
+    state: present
 
-# - name: Secure log file permissions
-#   ansible.builtin.blockinfile:
-#     path: /etc/rsyslog.conf
-#     block: |
-#       $FileOwner syslog
-#       $FileGroup adm
-#       $FileCreateMode 0640
+- name: Secure log file permissions
+  ansible.builtin.blockinfile:
+    path: /etc/rsyslog.conf
+    block: |
+      $FileOwner syslog
+      $FileGroup adm
+      $FileCreateMode 0640
 
-# - name: Apply SELinux context for log files
-#   ansible.builtin.command: >
-#     semanage fcontext -a -t var_log_t "/var/log/service_name.log"
+- name: Apply SELinux context for log files
+  ansible.builtin.command: >
+    semanage fcontext -a -t var_log_t "/var/log/service_name.log"
 
-# - name: Apply file integrity monitoring with AIDE
-#   ansible.builtin.dnf:
-#     name: aide
-#     state: present
-
-# - name: Initialise AIDE database
-#   ansible.builtin.command: aide --init
-#   register : aide_init_output
-#   changed_when: aide_init_output.rc == 0
-#   failed_when: aide_init_output.rc != 0
-
-# - name : Copy AIDE database 
-#   ansible.builtin.command: cp /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz
-#   when: aid_init_output is defined and aide_init_output.rc == 0
+# - name: "Sealing and checking files integrity"
 
 - name: Configure log rotations for syslog
   ansible.builtin.copy:
@@ -271,10 +258,10 @@
       # Mounting / unmounting monitoring
       -a exit,always -S mount -S umount2
       # Suspicious x86 syscalls calls
-      -a exit,always -S ioperm -S modify_ldt
+      -a exit,always -F arch=b32 -S ioperm -S modify_ldt
       # Syscalls calls that must be rare and closely monitored
-      -a exit,always -S get_kernel_syms -S ptrace
-      -a exit,always -S prctl
+      -a exit,always -F arch=b64 -S get_kernel_syms -S ptrace
+      -a exit,always -F arch=b64 -S prctl
       # Added monitoring for creating or deleting files
       -a exit,always -F arch=b64 -S unlink -S rmdir -S rename
       -a exit,always -F arch=b64 -S creat -S open -S openat -F exit=-EACCES
@@ -306,15 +293,136 @@
 - name: Restore SELinux context on log directory
   ansible.builtin.command: restorecon -Rv /var/log/services
 
-
-
 # - name: "Hardening the local messaging service"
 
-# - name: "Configuring aliases for service accounts"
+- name: Install sendmail
+  ansible.builtin.dnf:
+    name: sendmail
 
-# - name: "Sealing and checking files integrity"
+- name: Configure sendmail for local delivery only
+  ansible.builtin.template:
+    src: sendmail.mc.j2
+    dest: /etc/mail/sendmail.mc
+    owner: root
+    group: wheel
+    mode: '0664'
 
-# - name: "Protecting the sealing database"
+- name: Rebuild sendmail configuration
+  ansible.builtin.command:
+    cmd: m4 /etc/mail/sendmail.mc > /etc/mail/sendmail.cf
+    creates: /etc/mail/sendmail.cf
+
+- name: Set up mail aliases
+  ansible.builtin.lineinfile:
+    path: /etc/aliases
+    regexp: '^root:'
+    line: 'root: youradmin@example.com' #replace with your admin email
+    create: yes
+
+- name: "Configuring aliases for service accounts"
+  ansible.builtin.command: newaliases
+
+# - name : Sealing and checking files integrity
+- name: Apply file integrity monitoring with AIDE
+  ansible.builtin.dnf:
+    name: aide
+    state: present
+
+- name: Ensure /etc/aide directory exists
+  ansible.builtin.file:
+    path: /etc/aide
+    state: directory
+    owner: root
+    group: wheel
+    mode: '0755'
+
+- name: Configure AIDE
+  ansible.builtin.template:
+    src: aide.conf.j2
+    dest: /etc/aide/aide.conf
+    owner: root
+    group: wheel
+    mode: '0644'
+
+## - name: create aide group
+##   ansible.builtin.group:
+##     name: "aide"
+##     state: present
+
+## - name: create aide user
+##   ansible.builtin.user:
+##     name: "aide"
+##     groups: "aide"
+##     state: present
+
+## - name: Create key directory
+##   ansible.builtin.file:
+##     path: "{{ sealing_key_dir }}"
+##     state: directory
+##     owner: aide
+##     group: aide
+##     mode: '0777'
+
+- name: Ensure the key directory exists
+  ansible.builtin.file:
+    path: /etc/sealing
+    state: directory
+    mode: '0700'
+
+- name: Generate a private key
+  ansible.builtin.openssl_privatekey:
+    path: " {{ private_key_path }} "
+    cipher: aes256
+    passphrase: "{{ privkey_passphrase }}"
+    size: 2048
+    state: present
+    mode: '0600'
+
+- name: Generate a public key
+  ansible.builtin.openssl_publickey:
+    path: "{{ public_key_path }}"
+    privatekey_path: "{{ private_key_path }}"
+    state: present
+
+
+
+
+
+# - name: Initialise AIDE database
+#   ansible.builtin.command:
+#     cmd: aide --init
+
+# - name : Rename AIDE database
+#   ansible.builtin.command:
+#     cmd: mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz
+
+# - name: Set file permissions for AIDE database
+#   ansible.builtin.file:
+#     path: /var/lib/aide/aide.db.gz
+#     owner: root
+#     group: wheel
+#     mode: '0600'
+
+- name: Sign the AIDE Database
+  ansible.builtin.command:
+    cmd: openssl dgst -sha256 -sign "{{ private_key_path }}" -out "{{ aide_db_sig_path }}" "{{ aide_db_path }}"
+    creates: "{{ aide_db_sig_path }}"
+
+- name: Verify the AIDE database signature
+  ansible.builtin.command:
+    cmd:  openssl dgst -sha256 -verify "{{ public_key_path }}" -signature "{{ aide_db_sig_path }}" "{{ aide_db_path }}"
+  register: verify_output
+  failed_when: verify_output.rc != 0
+
+# - name: Create cron job for AIDE check
+#   ansible.builtin.cron:
+#     name: "Daily AIDE Integrity Check"
+#     minute: "0"
+#     hour: "1"
+#     job: "/usr/sbin/aide --check | mail -s 'AIDE Integrity Check Report' root"
+
+
+
 
 # - name: "Partitioning the network services"
 

@@ -1,8 +1,8 @@
 ---
-- name: Control Node
-  hosts: localhost
-  roles:
-    - localhost
+# - name: Control Node
+#   hosts: localhost
+#   roles:
+#     - localhost
 
 - name: Initial Playbook
   hosts: all

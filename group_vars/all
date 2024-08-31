@@ -24,3 +24,12 @@ capabilities_map:
       /usr/bin/clockdiff: cap_net_raw
       /usr/bin/gnome-keyring-daemon: cap_ipc_lock
       /usr/sbin/mtr-packet: cap_net_raw
+
+#aide vars
+# sealing_key_dir: /etc/aide
+private_key_path: "/etc/aide/private_key_aide.pem"
+# Change passphrase as per your company security guidelines.
+privkey_passphrase: "Vj&3Qw@8U%kX!9yZp1L^r0#Nc3Wd*2I" 
+public_key_path: "etc/aide/public_key_aide.pem"
+aide_db_path: /var/lib/aide/aide.db.gz
+aide_db_sig_path: /var/lib/aide/aide.db.gz.sig

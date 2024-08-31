@@ -1,0 +1,12 @@
+# Configuration for AIDE
+
+# Define file system locations to monitor
+/etc           A  # Monitor /etc for changes
+/var/log        A  # Monitor /var/log for changes
+/home           A  # Monitor /home for user files
+/usr/bin        A  # Monitor /usr/bin for executables
+/usr/lib        A  # Monitor /usr/lib for libraries
+
+# Define file attributes to check
+/etc/passwd     R  # Check read access on /etc/passwd
+/etc/shadow     R  # Check read access on /etc/shadow
