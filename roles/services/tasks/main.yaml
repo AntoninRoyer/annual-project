@@ -1,169 +1,312 @@
 ---
-- name: Disabling and stopping the non-necessary services
-  ansible.builtin.systemd:
-    name: "{{ item }}"
-    enabled: false
-    state: stopped
-  loop: "{{ services_list }}"
+# - name: Disabling and stopping the non-necessary services
+#   ansible.builtin.systemd:
+#     name: "{{ item }}"
+#     enabled: false
+#     state: stopped
+#   loop: "{{ services_list }}"
 
 
-- name: "Disabling non-essential features of services"
-  community.general.capabilities:
-    path: "{{ item.key }}"
-    state: absent
-    capability: "{{ item.value }}"
-  loop: "{{ capabilities_map | dict2items }}"
+# - name: "Disabling non-essential features of services"
+#   community.general.capabilities:
+#     path: "{{ item.key }}"
+#     state: absent
+#     capability: "{{ item.value }}"
+#   loop: "{{ capabilities_map | dict2items }}"
 
-# - name: "Configuring the privileges of the services"
+# # - name: "Configuring the privileges of the services"
 
-# - name: "Partitioning the services"
+# # - name: "Partitioning the services"
 
-# - name: "Hardening the partitioning components"
+# # - name: "Hardening the partitioning components"
 
-# Limit the elevation to root via su to the members of the group 'wheel ' only part 1
-- name: "Secure remote authentication with PAM 1"
-  ansible.builtin.template:
-    src: su.j2
-    dest: /etc/pam.d/su
-    owner: root
-    group: wheel
-    mode: '0644'
-
-
-# Limit the elevation to root via su to the members of the group 'wheel ' only part 2
-- name: "Secure remote authentication with PAM 2"
-  ansible.builtin.template:
-    src: su-l.j2
-    dest: /etc/pam.d/su-l
-    owner: root
-    group: wheel
-    mode: '0644'
+# # Limit the elevation to root via su to the members of the group 'wheel ' only part 1
+# - name: "Secure remote authentication with PAM 1"
+#   ansible.builtin.template:
+#     src: su.j2
+#     dest: /etc/pam.d/su
+#     owner: root
+#     group: wheel
+#     mode: '0644'
 
 
-# At least 12 characters of 3 different classes among the uppercase letters ,
-# lowercase letters , numbers and others by prohibiting repetition
-# of a character
-- name: "Secure remote authentication with PAM 3"
-  ansible.builtin.template:
-    src: passwd.j2
-    dest: /etc/pam.d/passwd
-    owner: root
-    group: wheel
-    mode: '0644'
-
-#Account blocking for 5 min after 3 failures part 1
-- name: "Secure remote authentication with PAM 4"
-  ansible.builtin.template:
-    src: passwd.j2
-    dest: /etc/pam.d/login
-    owner: root
-    group: wheel
-    mode: '0644'
-
-#Account blocking for 5 min after 3 failures part 2
-- name: "Secure remote authentication with PAM 5"
-  ansible.builtin.template:
-    src: sshd.j2
-    dest: /etc/pam.d/sshd
-    owner: root
-    group: wheel
-    mode: '0644'
+# # Limit the elevation to root via su to the members of the group 'wheel ' only part 2
+# - name: "Secure remote authentication with PAM 2"
+#   ansible.builtin.template:
+#     src: su-l.j2
+#     dest: /etc/pam.d/su-l
+#     owner: root
+#     group: wheel
+#     mode: '0644'
 
 
-- name: "Protecting the stored passwords"
-  ansible.builtin.lineinfile:
-      path: /etc/login.defs
-      regexp: '^ENCRYPT_METHOD'
-      line: 'ENCRYPT_METHOD SHA512'
-      state: present
+# # At least 12 characters of 3 different classes among the uppercase letters ,
+# # lowercase letters , numbers and others by prohibiting repetition
+# # of a character
+# - name: "Secure remote authentication with PAM 3"
+#   ansible.builtin.template:
+#     src: passwd.j2
+#     dest: /etc/pam.d/passwd
+#     owner: root
+#     group: wheel
+#     mode: '0644'
 
-- name: Configure PAM for strong hashing in system-auth
-  ansible.builtin.lineinfile:
-    path: /etc/pam.d/system-auth
-    regexp: '^password.*pam_unix.so'
-    line: 'password    sufficient    pam_unix.so sha512 shadow try_first_pass use_authtok'
-    state: present
+# #Account blocking for 5 min after 3 failures part 1
+# - name: "Secure remote authentication with PAM 4"
+#   ansible.builtin.template:
+#     src: passwd.j2
+#     dest: /etc/pam.d/login
+#     owner: root
+#     group: wheel
+#     mode: '0644'
 
-- name: Configure PAM for strong hashing in password-auth
-  ansible.builtin.lineinfile:
-    path: /etc/pam.d/password-auth
-    regexp: '^password.*pam_unix.so'
-    line: 'password    sufficient    pam_unix.so sha512 shadow try_first_pass use_authtok'
-    state: present
-
-- name: Configure password quality policies
-  ansible.builtin.lineinfile:
-    path: /etc/security/pwquality.conf
-    regexp: '^minlen'
-    line: 'minlen = 7'
-    state: present
-
-- name: Configure password aging policies
-  ansible.builtin.lineinfile:
-    path: /etc/login.defs
-    regexp: '^PASS_MAX_DAYS'
-    line: 'PASS_MAX_DAYS 90'
-    state: present
-
-- name: Restrict access to /etc/shadow
-  ansible.builtin.file:
-    path: /etc/shadow
-    owner: root
-    group: wheel
-    mode: '0600'
-
-- name: Install and configure auditd
-  ansible.builtin.dnf:
-    name: audit
-    state: present
-
-- name: Add audit rules for password file monitoring
-  ansible.builtin.blockinfile:
-    path: /etc/audit/rules.d/audit.rules
-    block: |
-      -w /etc/shadow -p wa -k passwd_changes
-      -w /etc/passwd -p wa -k passwd_changes
-
-- name: "Securing access to remote user databases"
-  ansible.builtin.dnf:
-    name:
-      - sssd
-      - sssd-client
-    state: present
-
-- name: "Separating the system accounts and directory administrator"
-  ansible.builtin.template:
-    src: sssd.conf.j2
-    dest: /etc/sssd/sssd.conf
-    owner: root
-    group: wheel
-    mode: '0600'
+# #Account blocking for 5 min after 3 failures part 2
+# - name: "Secure remote authentication with PAM 5"
+#   ansible.builtin.template:
+#     src: sshd.j2
+#     dest: /etc/pam.d/sshd
+#     owner: root
+#     group: wheel
+#     mode: '0644'
 
 
-- name: Configure NSS to use SSSD
-  ansible.builtin.lineinfile:
-    path: /etc/nsswitch.conf
-    regexp: '^passwd:'
-    line: 'passwd:     files sss'
-    state: present
+# - name: "Protecting the stored passwords"
+#   ansible.builtin.lineinfile:
+#       path: /etc/login.defs
+#       regexp: '^ENCRYPT_METHOD'
+#       line: 'ENCRYPT_METHOD SHA512'
+#       state: present
 
-- name: Secure SSSD configuration
-  ansible.builtin.file:
-    path: /etc/sssd/sssd.conf
-    owner: root
-    group: wheel
-    mode: '0600'
+# - name: Configure PAM for strong hashing in system-auth
+#   ansible.builtin.lineinfile:
+#     path: /etc/pam.d/system-auth
+#     regexp: '^password.*pam_unix.so'
+#     line: 'password    sufficient    pam_unix.so sha512 shadow try_first_pass use_authtok'
+#     state: present
+
+# - name: Configure PAM for strong hashing in password-auth
+#   ansible.builtin.lineinfile:
+#     path: /etc/pam.d/password-auth
+#     regexp: '^password.*pam_unix.so'
+#     line: 'password    sufficient    pam_unix.so sha512 shadow try_first_pass use_authtok'
+#     state: present
+
+# - name: Configure password quality policies
+#   ansible.builtin.lineinfile:
+#     path: /etc/security/pwquality.conf
+#     regexp: '^minlen'
+#     line: 'minlen = 7'
+#     state: present
+
+# - name: Configure password aging policies
+#   ansible.builtin.lineinfile:
+#     path: /etc/login.defs
+#     regexp: '^PASS_MAX_DAYS'
+#     line: 'PASS_MAX_DAYS 90'
+#     state: present
+
+# - name: Restrict access to /etc/shadow
+#   ansible.builtin.file:
+#     path: /etc/shadow
+#     owner: root
+#     group: wheel
+#     mode: '0600'
+
+# - name: Install and configure auditd
+#   ansible.builtin.dnf:
+#     name: 
+#       - audit
+#       - audit-libs
+#     state: present
+
+# - name: Add audit rules for password file monitoring
+#   ansible.builtin.blockinfile:
+#     path: /etc/audit/rules.d/audit.rules
+#     block: |
+#       -w /etc/shadow -p wa -k passwd_changes
+#       -w /etc/passwd -p wa -k passwd_changes
+
+# - name: "Securing access to remote user databases"
+#   ansible.builtin.dnf:
+#     name:
+#       - sssd
+#       - sssd-client
+#     state: present
+
+# - name: "Separating the system accounts and directory administrator"
+#   ansible.builtin.template:
+#     src: sssd.conf.j2
+#     dest: /etc/sssd/sssd.conf
+#     owner: root
+#     group: wheel
+#     mode: '0600'
 
 
+# - name: Configure NSS to use SSSD
+#   ansible.builtin.lineinfile:
+#     path: /etc/nsswitch.conf
+#     regexp: '^passwd:'
+#     line: 'passwd:     files sss'
+#     state: present
 
+# - name: Secure SSSD configuration
+#   ansible.builtin.file:
+#     path: /etc/sssd/sssd.conf
+#     owner: root
+#     group: wheel
+#     mode: '0600'
 
+# # - name: "Implementing a logging system"
+# - name: Install rsyslog
+#   ansible.builtin.dnf:
+#     name: rsyslog
+#     state: present
 
+# - name: Configure rsyslog for local loggin only
+#   ansible.builtin.lineinfile:
+#     path: /etc/rsyslog.conf
+#     regexp: '^\$ModLoad imtcp'
+#     line: '# $ModLoad imtcp' # Disable TCP input
+#     state: present
 
-# - name: "Implementing a logging system"
+# - name: Secure log file permissions
+#   ansible.builtin.blockinfile:
+#     path: /etc/rsyslog.conf
+#     block: |
+#       $FileOwner syslog
+#       $FileGroup adm
+#       $FileCreateMode 0640
+
+# - name: Apply SELinux context for log files
+#   ansible.builtin.command: >
+#     semanage fcontext -a -t var_log_t "/var/log/service_name.log"
+
+# - name: Apply file integrity monitoring with AIDE
+#   ansible.builtin.dnf:
+#     name: aide
+#     state: present
+
+# - name: Initialise AIDE database
+#   ansible.builtin.command: aide --init
+#   register : aide_init_output
+#   changed_when: aide_init_output.rc == 0
+#   failed_when: aide_init_output.rc != 0
+
+# - name : Copy AIDE database 
+#   ansible.builtin.command: cp /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz
+#   when: aid_init_output is defined and aide_init_output.rc == 0
+
+- name: Configure log rotations for syslog
+  ansible.builtin.copy:
+    dest: /etc/logrotate.d/syslog
+    content: |
+      /var/log/syslog
+      {
+          rotate 7
+          daily
+          missingok
+          notifempty
+          compress
+          delaycompress
+          sharedscripts
+          postrotate
+              /usr/bin/systemctl reload rsyslog > /dev/null 2>&1 || true
+          endscript
+      }
 
 # - name: "Implementing dedicated service activity journals"
+- name: Configure rsyslog for dedicated service logs
+  ansible.builtin.blockinfile:
+    path: /etc/rsyslog.conf
+    block: | 
+      if $programname == 'sshd' then /var/log/services/sshd.log
+      & stop
+      if $programname == 'sssd' then /var/log/services/sshd.log
+      & stop
+
+- name: create syslog group
+  ansible.builtin.group:
+    name: "syslog"
+    state: present
+
+- name: create syslog user
+  ansible.builtin.user:
+    name: "syslog"
+    groups: "syslog"
+    state: present
+  
+- name: Create log directories
+  ansible.builtin.file:
+    path: /var/log/services
+    state: directory
+    owner: syslog
+    group: syslog
+    mode: '0750'
+
+- name: Create log files
+  ansible.builtin.file:
+    path: "/var/log/services/{{ item }}.log"
+    state: touch
+    owner: syslog
+    group: syslog
+    mode: '0640'
+  loop:
+    - sshd
+    - sssd
+
 
 # - name: "Logging the system activity with auditd"
+- name: Configure audit rules
+  ansible.builtin.copy:
+    dest: /etc/audit/rules.d/audit.rules
+    content: |
+      # Run of insmod, rmmod, and modprobe
+      -w /sbin/insmod -p x
+      -w /sbin/modprobe -p x
+      -w /sbin/rmmod -p x
+      # On recent GNU / Linux distributions, insmod, rmmod and modprobe are symbolic links of kmod
+      -w /bin/kmod -p x
+      # Log changes in /etc/
+      -w /etc/ -p wa
+      # Mounting / unmounting monitoring
+      -a exit,always -S mount -S umount2
+      # Suspicious x86 syscalls calls
+      -a exit,always -S ioperm -S modify_ldt
+      # Syscalls calls that must be rare and closely monitored
+      -a exit,always -S get_kernel_syms -S ptrace
+      -a exit,always -S prctl
+      # Added monitoring for creating or deleting files
+      -a exit,always -F arch=b64 -S unlink -S rmdir -S rename
+      -a exit,always -F arch=b64 -S creat -S open -S openat -F exit=-EACCES
+      -a exit,always -F arch=b64 -S truncate -S ftruncate -F exit=-EACCES
+      # Added monitoring for loading, changing and unloading kernel modules
+      -a exit,always -F arch=b64 -S init_module -S delete_module
+      -a exit,always -F arch=b64 -S finit_module
+      # Locking the auditd configuration
+      -e 2
+      -w /etc/ssh/sshd_config -p wa -k sshd_config_change
+      -w /etc/passwd -p rwxa -k passwd_changes
+      -a always,exit -F arch=b64 -S init_module -S delete_module -k module_insertion
+      -a always,exit -F arch=b64 -S all -F auid>=1000 -F auid!=4294967295 -k syscall_monitor
+
+- name: Reload audit rules
+  ansible.builtin.command: augenrules --load
+  register: reload_audit_output
+  changed_when: "'No rules' not in reload_audit_output.stdout"
+
+- name: Restart rsyslog
+  ansible.builtin.service:
+    name: rsyslog
+    state: restarted
+
+- name: Apply SELinux context for log files
+  ansible.builtin.command: >
+    semanage fcontext -a -t var_log_t "/var/log/services(/.*)?"
+
+- name: Restore SELinux context on log directory
+  ansible.builtin.command: restorecon -Rv /var/log/services
+
+
 
 # - name: "Hardening the local messaging service"
 
