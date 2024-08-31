@@ -2,6 +2,6 @@
 - name: Configure remote hosts
   hosts: alma
   roles:
-    - kernel
-    - system
+    # - kernel
+    # - system
     - services

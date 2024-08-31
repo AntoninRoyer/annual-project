@@ -66,25 +66,29 @@ excluded_users:
 
 # services
 services_list:
-               - avahi-daemon
-               - alsa-state 
-               - colord
-               - ModemManager
-               - switcheroo-control
-               - packagekit
-               - realmd
-               - rtkit-daemon
-               - gdm
-               - power-profiles-daemon
-               - wpa_supplicant
+  - bluetooth
+  - vmtoolsd
+  - vgauthd
+  - smartd
+  - iscsi
+  - iscsi-shutdown
+  - iscsid
+  - iscsiuio
+  - multipathd
+  - kdump
+  - tuned
+  - chronyd
+  - NetworkManager-wait-online
+  - cpupower
+  - logrotate
+
 
 capabilities_map:
-      /usr/bin/newgidmap: cap_setgid
-      /usr/bin/newuidmap: cap_setuid
-      /usr/bin/arping: cap_net_raw
-      /usr/bin/clockdiff: cap_net_raw
-      /usr/bin/gnome-keyring-daemon: cap_ipc_lock
-      /usr/sbin/mtr-packet: cap_net_raw
+  /usr/bin/newgidmap: cap_setgid
+  /usr/bin/newuidmap: cap_setuid
+  /usr/bin/arping: cap_net_raw
+  /usr/bin/clockdiff: cap_net_raw
+  /usr/sbin/mtr-packet: cap_net_raw
 
 #aide vars
 # sealing_key_dir: /etc/aide
