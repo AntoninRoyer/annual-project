@@ -131,7 +131,7 @@
       - sssd-client
     state: present
 
-- name: Configure SSSD
+- name: "Separating the system accounts and directory administrator"
   ansible.builtin.template:
     src: sssd.conf.j2
     dest: /etc/sssd/sssd.conf
@@ -157,7 +157,7 @@
 
 
 
-# - name: "Separating the system accounts and directory administrator"
+
 
 # - name: "Implementing a logging system"
 
