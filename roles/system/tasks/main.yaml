@@ -191,8 +191,6 @@
 # #     mode: '4750'
 
 
-# TODO: R38+39+40 but the sudo causes crashes in the playbook
-
 - name: Créer un utilisateur non privilégié
   user:
     name: "unprivileged_user"
