@@ -345,39 +345,11 @@
     group: wheel
     mode: '0644'
 
-## - name: create aide group
-##   ansible.builtin.group:
-##     name: "aide"
-##     state: present
-
-## - name: create aide user
-##   ansible.builtin.user:
-##     name: "aide"
-##     groups: "aide"
-##     state: present
-
-## - name: Create key directory
-##   ansible.builtin.file:
-##     path: "{{ sealing_key_dir }}"
-##     state: directory
-##     owner: aide
-##     group: aide
-##     mode: '0777'
-
 - name: Ensure the key directory exists
   ansible.builtin.file:
     path: /etc/sealing
     state: directory
     mode: '0700'
-
-# - name: Generate a private key
-#   ansible.builtin.openssl_privatekey:
-#     path: "{{ private_key_path }}"
-#     cipher: aes256
-#     passphrase: "{{ privkey_passphrase }}"
-#     size: 2048
-#     state: present
-#     mode: '0600'
 
 - name: Ensure Python pip is installed
   ansible.builtin.dnf:
@@ -400,48 +372,30 @@
     privatekey_path: "{{ private_key_path }}"
     state: present
 
+- name: Initialise AIDE database
+  ansible.builtin.command:
+    cmd: aide --init
 
-
-
-
-# - name: Initialise AIDE database
-#   ansible.builtin.command:
-#     cmd: aide --init
-
-# - name : Rename AIDE database
-#   ansible.builtin.command:
-#     cmd: mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz
-
-# - name: Set file permissions for AIDE database
-#   ansible.builtin.file:
-#     path: /var/lib/aide/aide.db.gz
-#     owner: root
-#     group: wheel
-#     mode: '0600'
+- name : Rename AIDE database
+  ansible.builtin.command:
+    cmd: mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz
 
 - name: Sign the AIDE Database
   ansible.builtin.command:
     cmd: openssl dgst -sha256 -sign "{{ private_key_path }}" -out "{{ aide_db_sig_path }}" "{{ aide_db_path }}"
     creates: "{{ aide_db_sig_path }}"
 
-- name: Verify the AIDE database signature
-  ansible.builtin.command:
-    cmd:  openssl dgst -sha256 -verify "{{ public_key_path }}" -signature "{{ aide_db_sig_path }}" "{{ aide_db_path }}"
-  register: verify_output
-  failed_when: verify_output.rc != 0
+- name: Create cron job for AIDE check
+  ansible.builtin.cron:
+    name: "Daily AIDE Integrity Check"
+    minute: "0"
+    hour: "1"
+    job: "/usr/sbin/aide --check | mail -s 'AIDE Integrity Check Report' root"
 
-# - name: Create cron job for AIDE check
-#   ansible.builtin.cron:
-#     name: "Daily AIDE Integrity Check"
-#     minute: "0"
-#     hour: "1"
-#     job: "/usr/sbin/aide --check | mail -s 'AIDE Integrity Check Report' root"
-
-
-
-
-# - name: "Partitioning the network services"
-
-# - name: "Hardening and monitoring the exposed services"
-
-# - name: "Minimizing the attack surface of network services"
+- name: Secure AIDE private key
+  ansible.builtin.file:
+    path: "{{ private_key_path }}"
+    owner: root
+    group: wheel
+    mode: '0400'
+    state: file
