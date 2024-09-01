@@ -81,10 +81,6 @@ services_list:
   - NetworkManager-wait-online
   - cpupower
   - logrotate
-  - ftp
-  - telnet
-  - rsh
-  - rexec
 
 
 capabilities_map:

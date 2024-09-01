@@ -399,3 +399,10 @@
     group: wheel
     mode: '0400'
     state: file
+
+- name: Remove unecessary packages
+  ansible.builtin.dnf:
+    name: 
+      - telnet
+      - ftp
+    state: absent
