@@ -85,7 +85,7 @@
     line: 'password    sufficient    pam_unix.so sha512 shadow try_first_pass use_authtok'
     state: present
 
-# - name: Configure PAM for strong hashing in password-auth
+- name: Configure PAM for strong hashing in password-auth
   ansible.builtin.lineinfile:
     path: /etc/pam.d/password-auth
     regexp: '^password.*pam_unix.so'
