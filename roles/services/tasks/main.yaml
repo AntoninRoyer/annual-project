@@ -22,53 +22,53 @@
 
 # TODO: find the problematic PAM
 # Limit the elevation to root via su to the members of the group 'wheel ' only part 1
-# - name: "Secure remote authentication with PAM 1"
-#   ansible.builtin.template:
-#     src: su.j2
-#     dest: /etc/pam.d/su
-#     owner: root
-#     group: wheel
-#     mode: '0644'
+- name: "Secure remote authentication with PAM 1"
+  ansible.builtin.template:
+    src: su.j2
+    dest: /etc/pam.d/su
+    owner: root
+    group: wheel
+    mode: '0644'
 
 
 # # # Limit the elevation to root via su to the members of the group 'wheel ' only part 2
-# - name: "Secure remote authentication with PAM 2"
-#   ansible.builtin.template:
-#     src: su-l.j2
-#     dest: /etc/pam.d/su-l
-#     owner: root
-#     group: wheel
-#     mode: '0644'
+- name: "Secure remote authentication with PAM 2"
+  ansible.builtin.template:
+    src: su-l.j2
+    dest: /etc/pam.d/su-l
+    owner: root
+    group: wheel
+    mode: '0644'
 
 
 # # # At least 12 characters of 3 different classes among the uppercase letters ,
 # # # lowercase letters , numbers and others by prohibiting repetition
 # # # of a character
-# - name: "Secure remote authentication with PAM 3"
-#   ansible.builtin.template:
-#     src: passwd.j2
-#     dest: /etc/pam.d/passwd
-#     owner: root
-#     group: wheel
-#     mode: '0644'
+- name: "Secure remote authentication with PAM 3"
+  ansible.builtin.template:
+    src: passwd.j2
+    dest: /etc/pam.d/passwd
+    owner: root
+    group: wheel
+    mode: '0644'
 
-# # #Account blocking for 5 min after 3 failures part 1
-# - name: "Secure remote authentication with PAM 4"
-#   ansible.builtin.template:
-#     src: passwd.j2
-#     dest: /etc/pam.d/login
-#     owner: root
-#     group: wheel
-#     mode: '0644'
+# #Account blocking for 5 min after 3 failures part 1
+- name: "Secure remote authentication with PAM 4"
+  ansible.builtin.template:
+    src: login.j2
+    dest: /etc/pam.d/login
+    owner: root
+    group: wheel
+    mode: '0644'
 
 # # #Account blocking for 5 min after 3 failures part 2
-# - name: "Secure remote authentication with PAM 5"
-#   ansible.builtin.template:
-#     src: sshd.j2
-#     dest: /etc/pam.d/sshd
-#     owner: root
-#     group: wheel
-#     mode: '0644'
+- name: "Secure remote authentication with PAM 5"
+  ansible.builtin.template:
+    src: sshd.j2
+    dest: /etc/pam.d/sshd
+    owner: root
+    group: wheel
+    mode: '0644'
 
 
 - name: "Protecting the stored passwords"
